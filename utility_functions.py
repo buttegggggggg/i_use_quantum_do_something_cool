@@ -1,41 +1,47 @@
-def common_terms():
-    from qiskit import QuantumCircuit, Aer, transpile, IBMQ
-    from qiskit.tools.monitor import job_monitor
+from qiskit import QuantumCircuit, transpile, IBMQ, providers
+from qiskit.providers import ibmq
 
+def plot_results(results_list):
+    from matplotlib import pyplot
+    # 繪製標準化後的數據，並添加標記以顯示每個點
+    pyplot.plot(results_list, marker='o')
+    # 繪製 y = 0.5 的線
+    pyplot.axhline(y=0.5, color='r', linestyle='-')
+    pyplot.ylim(0, 1)
+    # 顯示圖表
+    pyplot.show()
 
-    # Load the saved IBM Q account
+class IBMQ_backends:
     IBMQ.load_account()
-
-    # Get the provider
     provider = IBMQ.get_provider()
 
-    # Select a quantum hardware backend
-    # available_backends = provider.backends(filters=lambda x: x.configuration().n_qubits >= 1 and not x.configuration().simulator)
-    backend = provider.backends.ibm_lagos # least_busy(available_backends)
-    print(f"Using {backend.name()}")
+    @classmethod
+    def ibm_lagos(cls):
+        return cls.provider.backends.ibm_lagos
 
+    @classmethod
+    def least_busy(cls):
+        return ibmq.least_busy(cls.provider.backends(simulator = False))
+
+def run_circuits(start, stop, get_backend, show_plot):
     # 創建一個量子電路
     qc = QuantumCircuit(1, 1)
     qc.h(0)  # 添加 H-gate
     qc.measure([0], [0])
-
-    # 編譯電路
-    compiled_circuit = transpile(qc,  backend=backend, optimization_level=3)
-
-
-    results_list = []
-
-    # 迴圈 n=1 ~ 10000
-    for n in range(1, 4):
-        # 執行模擬
-        job =  backend.run(compiled_circuit, shots=n)
-        result = job.result()
-        counts = result.get_counts(qc)
-        
-        # 獲取結果為 0 的次數並除以 n
-        zero_counts = counts.get('0', 0)
-        ratio = zero_counts / n
-        results_list.append(ratio)
-        
-        # 打印結果列=f
-        print(results_list)
+    results_list=[]
+    for n in range(start, stop):
+        from backoff import on_exception, expo
+        @on_exception(expo, ibmq.job.IBMQJobApiError)
+        def run_circuit():
+            backend = get_backend()
+            print(f"Using {backend.name()}")
+            # 獲取結果為 0 的次數並除以 n
+            results_list.append(backend.run(
+                transpile(qc,  backend=backend, optimization_level=3), 
+                shots=n).result().get_counts(qc).get('0', 0) / n)
+            print('n =', n)
+            # 打印結果列=f
+            print(results_list)
+            if show_plot:
+                plot_results(results_list)
+        run_circuit()
