@@ -1,0 +1,21 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: i_use_quantum_do_something_cool
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+authors:
+  - given-names: 子元
+    family-names: 陳
+    email: S109053018@mail.nchu.edu.tw
+    affiliation: 國立中興大學應用數學系
+  - given-names: 淯琮
+    family-names: 戴
+    email: yuttai@nchu.edu.tw
+    affiliation: 國立中興大學人工智慧學程
+    orcid: 'https://orcid.org/0000-0002-0298-1362'
+repository-code: >-
+  https://github.com/buttegggggggg/i_use_quantum_do_something_cool.git

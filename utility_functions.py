@@ -23,12 +23,14 @@ class IBMQ_backends:
     def least_busy(cls):
         return ibmq.least_busy(cls.provider.backends(simulator = False))
 
-def run_circuits(start, stop, get_backend, show_plot):
+def run_circuits(start, stop, get_backend, show_plot, each_shot=False):
     # 創建一個量子電路
     qc = QuantumCircuit(1, 1)
     qc.h(0)  # 添加 H-gate
     qc.measure([0], [0])
     results_list=[]
+    if each_shot:
+        results_ratio = []
     for n in range(start, stop):
         from backoff import on_exception, expo
         @on_exception(expo, ibmq.job.IBMQJobApiError)
@@ -36,12 +38,19 @@ def run_circuits(start, stop, get_backend, show_plot):
             backend = get_backend()
             print(f"Using {backend.name()}")
             # 獲取結果為 0 的次數並除以 n
-            results_list.append(backend.run(
-                transpile(qc,  backend=backend, optimization_level=3), 
-                shots=n).result().get_counts(qc).get('0', 0) / n)
-            print('n =', n)
-            # 打印結果列=f
-            print(results_list)
-            if show_plot:
-                plot_results(results_list)
+            result = backend.run(transpile(qc,  backend=backend, optimization_level=3), shots=n, memory=each_shot).result()
+
+            def 打印結果列(results_list):
+                print('n =', len(results_list))
+                print(results_list)
+                if show_plot:
+                    plot_results(results_list)
+            if each_shot:
+                for shot_result in result.get_memory():
+                    results_list.append((results_list[-1] if results_list else 0) + int(shot_result))
+                    results_ratio.append(results_list[-1] / len(results_list))
+                    打印結果列(results_ratio)
+            else:
+                results_list.append(result.get_counts(qc).get('0', 0) / n)
+                打印結果列(results_list)
         run_circuit()
