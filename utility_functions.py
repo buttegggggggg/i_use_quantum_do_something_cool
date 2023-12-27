@@ -1,15 +1,6 @@
 from qiskit import QuantumCircuit, transpile, IBMQ, providers
 from qiskit.providers import ibmq
-
-def plot_results(results_list):
-    from matplotlib import pyplot
-    # 繪製標準化後的數據，並添加標記以顯示每個點
-    pyplot.plot(results_list, marker='o')
-    # 繪製 y = 0.5 的線
-    pyplot.axhline(y=0.5, color='r', linestyle='-')
-    pyplot.ylim(0, 1)
-    # 顯示圖表
-    pyplot.show()
+from offline_tools import plot_results
 
 class IBMQ_backends:
     IBMQ.load_account()
